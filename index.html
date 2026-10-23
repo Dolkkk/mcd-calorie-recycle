@@ -176,6 +176,18 @@ footer{
   font-size:11.5px; color:#8a7a68; line-height:1.8;
 }
 footer a{color:var(--red); font-weight:700}
+.star-pill{display:inline-flex; align-items:center; gap:6px; background:#fff; color:var(--red); font-weight:900; padding:8px 16px; border:3px solid var(--ink); border-radius:999px; box-shadow:3px 3px 0 var(--ink); margin:12px auto 0; text-decoration:none; font-size:14px; transition:transform .15s}
+.star-pill:hover{transform:translateY(-2px) rotate(-1deg)}
+.star-pill .sh{display:inline-block; animation:tw 1.6s ease-in-out infinite}
+@keyframes tw{0%,100%{transform:scale(1)}50%{transform:scale(1.3) rotate(12deg)}}
+.star-card{background:linear-gradient(135deg, var(--yellow), #FFB300); border:4px solid var(--ink); border-radius:22px; box-shadow:6px 6px 0 rgba(43,33,24,.25); padding:20px 16px; margin:0 0 18px; text-align:center; color:var(--ink)}
+.star-card h3{font-size:19px; margin:0 0 6px; font-weight:900}
+.star-card p{font-size:13px; opacity:.85; margin:0 0 14px; font-weight:600}
+.star-btn-big{display:inline-flex; align-items:center; gap:8px; background:var(--red); color:#fff; font-weight:900; font-size:17px; padding:12px 26px; border:3px solid var(--ink); border-radius:999px; box-shadow:4px 4px 0 var(--ink); text-decoration:none}
+.star-btn-big:hover{transform:translateY(-2px)}
+.gh-iframe{display:block; margin:12px auto 0; border:0}
+.star-fab{position:fixed; right:14px; bottom:14px; width:54px; height:54px; border-radius:50%; background:var(--yellow); border:3px solid var(--ink); box-shadow:3px 3px 0 var(--ink); display:flex; align-items:center; justify-content:center; font-size:26px; z-index:60; text-decoration:none; animation:fabPulse 2.4s ease-in-out infinite}
+@keyframes fabPulse{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.1) rotate(10deg)}}
 .warn-tag{
   display:inline-block; background:#fff; border:2px solid var(--ink); border-radius:999px;
   padding:3px 12px; font-size:11px; font-weight:800; color:var(--ink); margin:2px;
@@ -223,6 +235,7 @@ footer a{color:var(--red); font-weight:700}
   <h1>麦麦<span class="hl">热量回收</span>计划</h1>
   <p class="sub">走去麦当劳这趟路，烧掉的卡路里都是你回收的额度 🍔</p>
   <p class="sub" style="opacity:.8; font-size:13px; margin-top:4px">别人算热量是怕吃，我们算热量是给吃找理由。</p>
+  <a class="star-pill" href="https://github.com/Dolkkk/mcd-calorie-recycle" target="_blank" rel="noopener"><span class="sh">⭐</span> 这是开源参赛作品，点颗星支持一下</a>
 </div>
 <div class="zig"><svg viewBox="0 0 480 16" preserveAspectRatio="none"><polygon points="0,0 480,0 480,4 440,16 400,4 360,16 320,4 280,16 240,4 200,16 160,4 120,16 80,4 40,16 0,4" fill="#FFF8E7"/></svg></div>
 
@@ -315,6 +328,12 @@ footer a{color:var(--red); font-weight:700}
 </div>
 
 <footer>
+  <div class="star-card">
+    <h3>⭐ 觉得这玩法有点意思？</h3>
+    <p>它正在 GitHub 上参加麦当劳程序员创意开发大赛，每一颗真实的 Star 都是纯动力。</p>
+    <a class="star-btn-big" href="https://github.com/Dolkkk/mcd-calorie-recycle" target="_blank" rel="noopener">⭐ 去 GitHub 点颗星</a>
+    <iframe class="gh-iframe" src="https://ghbtns.com/github-btn.html?user=Dolkkk&amp;repo=mcd-calorie-recycle&amp;type=star&amp;count=true" width="130" height="28" title="GitHub Star"></iframe>
+  </div>
   <div>
     <span class="warn-tag">参赛作品 · 非麦当劳官方产品</span>
     <span class="warn-tag">热量为估算值</span>
@@ -329,6 +348,7 @@ footer a{color:var(--red); font-weight:700}
     <a href="https://github.com/Dolkkk/mcd-calorie-recycle" target="_blank" rel="noopener">GitHub 开源仓库 ↗</a>
   </p>
 </footer>
+<a class="star-fab" href="https://github.com/Dolkkk/mcd-calorie-recycle" target="_blank" rel="noopener" title="去 GitHub 点颗星" aria-label="给 GitHub 仓库点星">⭐</a>
 
 <script src="data.js"></script>
 <script>
