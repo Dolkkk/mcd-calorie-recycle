@@ -188,6 +188,11 @@ footer a{color:var(--red); font-weight:700}
 .gh-iframe{display:block; margin:12px auto 0; border:0}
 .star-fab{position:fixed; right:14px; bottom:14px; width:54px; height:54px; border-radius:50%; background:var(--yellow); border:3px solid var(--ink); box-shadow:3px 3px 0 var(--ink); display:flex; align-items:center; justify-content:center; font-size:26px; z-index:60; text-decoration:none; animation:fabPulse 2.4s ease-in-out infinite}
 @keyframes fabPulse{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.1) rotate(10deg)}}
+.search-wrap{position:relative; margin:14px 0 6px}
+#storeSearch{width:100%; box-sizing:border-box; padding:13px 16px; border:3px solid var(--ink); border-radius:14px; font-size:15px; font-weight:700; outline:none; background:#fff}
+#storeSearch:focus{border-color:var(--red); box-shadow:3px 3px 0 rgba(43,33,24,.22)}
+.search-results{margin-top:10px}
+.search-results .store{cursor:pointer}
 .warn-tag{
   display:inline-block; background:#fff; border:2px solid var(--ink); border-radius:999px;
   padding:3px 12px; font-size:11px; font-weight:800; color:var(--ink); margin:2px;
@@ -256,6 +261,10 @@ footer a{color:var(--red); font-weight:700}
     <h2><span class="step-no">2</span>你在哪儿？</h2>
     <button class="btn yellow" onclick="getLoc()">📍 获取我的位置</button>
     <p class="hint" id="locHint">定位只在你的浏览器里计算，不上传、不存储，放心。</p>
+    <div class="search-wrap">
+      <input id="storeSearch" type="search" autocomplete="off" placeholder="🔍 有目标了？搜店名或地址，如「翠微路」" oninput="onStoreSearch(this.value)">
+      <div id="searchResults" class="search-results"></div>
+    </div>
     <div class="chips" id="anchorChips"></div>
     <div id="storeBox" class="hidden">
       <h2 style="margin-top:18px; font-size:16px">🍟 附近的麦当劳</h2>
@@ -414,28 +423,67 @@ function useAnchor(key){
 function renderStores(){
   const box = document.getElementById('storeBox'), list = document.getElementById('storeList');
   box.classList.remove('hidden');
-  const ranked = DATA.stores
-    .filter(s => s.coord)
-    .map(s => ({...s, d: hav(S.pos, s.coord)}))
-    .sort((a, b) => a.d - b.d)
-    .slice(0, 5);
-  if(!ranked.length){ list.innerHTML = '<p class="hint">附近暂时没有数据，换个地标试试。</p>'; return; }
-  S.store = ranked[0];
-  list.innerHTML = ranked.map((s, i) => `
-    <div class="store ${i === 0 ? 'on' : ''}" onclick="pickStore(${i})">
+  let ranked = [];
+  if(S.pos){
+    ranked = DATA.stores
+      .filter(s => s.coord)
+      .map(s => ({...s, d: hav(S.pos, s.coord)}))
+      .sort((a, b) => a.d - b.d)
+      .slice(0, 5);
+  }
+  if(!S.storeLocked && ranked.length){ S.store = ranked[0]; }
+  let items = ranked;
+  if(S.store && !ranked.some(s => s.n === S.store.n)){
+    items = [{...S.store, d: S.pos ? hav(S.pos, S.store.coord) : null}, ...ranked.slice(0, 4)];
+    S.store = items[0];
+  }
+  if(!items.length){ list.innerHTML = '<p class="hint">附近暂时没有数据，换个地标或直接搜店名。</p>'; return; }
+  list.innerHTML = items.map((s, i) => `
+    <div class="store ${S.store && s.n === S.store.n ? 'on' : ''}" onclick="pickStore(${i})">
       <div>
         <div class="nm">${s.n}</div>
         <div class="ad">${s.a}</div>
         <div class="badge">🕐 ${s.o || '?'}–${s.cl || '?'}</div>
       </div>
-      <div class="km">直线<br>${s.d.toFixed(1)}km</div>
+      <div class="km">${s.d != null ? '直线<br>' + s.d.toFixed(1) + 'km' : '已锁定'}</div>
     </div>`).join('');
-  S._ranked = ranked;
+  S._ranked = items;
 }
 function pickStore(i){
   S.store = S._ranked[i];
+  S.storeLocked = true;
   document.querySelectorAll('#storeList .store').forEach((el, k) => el.classList.toggle('on', k === i));
   if(S.routes) computeAll();   // 换店后自动重算
+}
+/* ---- 搜店：手动锁定目标门店 ---- */
+function onStoreSearch(q){
+  const box = document.getElementById('searchResults');
+  q = (q || '').trim();
+  if(!q){ box.innerHTML = ''; return; }
+  const hits = DATA.stores.filter(s => s.coord && (s.n.includes(q) || (s.a || '').includes(q))).slice(0, 6);
+  if(!hits.length){
+    box.innerHTML = '<p class="hint" style="padding:10px 12px">没搜到～试试更短的关键词，比如「望京」「翠微」。</p>';
+    return;
+  }
+  box.innerHTML = hits.map(s => `
+    <div class="store" onclick="pickSearchStore('${encodeURIComponent(s.n)}')">
+      <div>
+        <div class="nm">${s.n}</div>
+        <div class="ad">${s.a}</div>
+      </div>
+      <div class="km">${S.pos ? '直线<br>' + hav(S.pos, s.coord).toFixed(1) + 'km' : '📍'}</div>
+    </div>`).join('');
+}
+function pickSearchStore(enc){
+  const name = decodeURIComponent(enc);
+  const s = DATA.stores.find(x => x.n === name && x.coord);
+  if(!s) return;
+  S.storeLocked = true;
+  S.store = {...s, d: S.pos ? hav(S.pos, s.coord) : null};
+  document.getElementById('storeSearch').value = s.n;
+  document.getElementById('searchResults').innerHTML = '';
+  renderStores();
+  if(S.routes) computeAll();   // 已算过就自动换目标重算
 }
 
 /* ================= 3. 体重 ================= */
