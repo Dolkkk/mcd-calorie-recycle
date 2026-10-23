@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>麦麦热量回收计划｜走去麦当劳，烧掉的卡路里都是回收的额度</title>
+<meta name="description" content="步行/骑行去最近的麦当劳，这趟路燃烧的卡路里能回收几份餐品？麦当劳官方营养数据 × 真实路线计算。麦当劳程序员创意开发大赛参赛作品。">
+<style>
+:root{
+  --red:#DA291C; --deep:#B31E12; --yellow:#FFC72C; --cream:#FFF8E7;
+  --ink:#2B2118; --white:#fff; --green:#7CB342;
+}
+*{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  background:var(--cream); color:var(--ink);
+  font-family:system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  line-height:1.6; overflow-x:hidden;
+}
+.wrap{max-width:480px; margin:0 auto; padding:0 16px 60px}
+
+/* ---------- Hero ---------- */
+.hero{
+  background:var(--red); color:#fff; text-align:center;
+  padding:34px 16px 56px; position:relative; overflow:hidden;
+}
+.hero .flame{position:absolute; font-size:22px; opacity:.55; animation:rise 4s linear infinite}
+@keyframes rise{
+  0%{transform:translateY(40px) scale(.7); opacity:0}
+  30%{opacity:.6}
+  100%{transform:translateY(-120px) scale(1.1); opacity:0}
+}
+.hero h1{font-size:34px; font-weight:900; letter-spacing:1px; margin:10px 0 6px; text-shadow:3px 3px 0 rgba(0,0,0,.18)}
+.hero h1 .hl{color:var(--yellow)}
+.hero p.sub{font-size:15px; opacity:.96; font-weight:600}
+.burger-hero{width:170px; margin:6px auto 2px; animation:bob 3s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-10px) rotate(2deg)}}
+.zig{height:16px; background:var(--yellow); position:relative}
+.zig svg{display:block; width:100%; height:16px}
+
+/* ---------- 通用卡片/按钮 ---------- */
+.card{
+  background:var(--white); border:3px solid var(--ink); border-radius:20px;
+  box-shadow:5px 5px 0 var(--ink); padding:18px; margin-top:20px;
+}
+.card h2{font-size:19px; font-weight:900; display:flex; align-items:center; gap:8px}
+.step-no{
+  background:var(--red); color:#fff; border:2.5px solid var(--ink); border-radius:50%;
+  width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center;
+  font-size:15px; font-weight:900; flex:none;
+}
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  background:var(--red); color:#fff; font-size:17px; font-weight:900;
+  border:3px solid var(--ink); border-radius:999px; padding:13px 26px;
+  box-shadow:4px 4px 0 var(--ink); cursor:pointer; transition:transform .08s;
+  font-family:inherit; width:100%;
+}
+.btn:active{transform:translate(3px,3px); box-shadow:1px 1px 0 var(--ink)}
+.btn.yellow{background:var(--yellow); color:var(--ink)}
+.btn.ghost{background:#fff; color:var(--ink)}
+.hint{font-size:12.5px; color:#8a7a68; margin-top:8px}
+
+/* ---------- 出行方式 ---------- */
+.mode-row{display:flex; gap:12px; margin-top:14px}
+.mode{
+  flex:1; border:3px solid var(--ink); border-radius:18px; background:#fff;
+  padding:14px 8px; text-align:center; cursor:pointer; font-weight:800;
+  box-shadow:3px 3px 0 var(--ink); transition:all .12s;
+}
+.mode .ico{font-size:34px; display:block; margin-bottom:2px}
+.mode.on{background:var(--yellow); transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink)}
+
+/* ---------- 定位与门店 ---------- */
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+.chip{
+  border:2.5px solid var(--ink); border-radius:999px; background:#fff;
+  padding:7px 14px; font-size:13.5px; font-weight:700; cursor:pointer;
+}
+.chip.on{background:var(--red); color:#fff}
+.store{
+  border:3px solid var(--ink); border-radius:16px; padding:12px 14px; margin-top:10px;
+  background:#fff; cursor:pointer; display:flex; justify-content:space-between; gap:10px;
+  box-shadow:3px 3px 0 rgba(43,33,24,.25); transition:all .12s;
+}
+.store.on{background:#FFF3D0; box-shadow:3px 3px 0 var(--ink)}
+.store .nm{font-weight:800; font-size:14.5px}
+.store .ad{font-size:12px; color:#8a7a68; margin-top:2px}
+.store .km{
+  font-weight:900; color:var(--red); white-space:nowrap; font-size:15px; align-self:center;
+}
+.badge{display:inline-block; background:var(--green); color:#fff; font-size:11px;
+  border-radius:999px; padding:1px 9px; font-weight:700; margin-top:4px}
+.badge.closed{background:#9c8f80}
+
+/* ---------- 体重滑条 ---------- */
+.slider-row{display:flex; align-items:center; gap:12px; margin-top:14px}
+input[type=range]{flex:1; accent-color:var(--red); height:32px}
+.w-badge{
+  background:var(--yellow); border:3px solid var(--ink); border-radius:14px;
+  font-weight:900; padding:6px 12px; min-width:78px; text-align:center;
+}
+
+/* ---------- 结果区 ---------- */
+.result-head{
+  background:var(--red); color:#fff; border:3px solid var(--ink); border-radius:20px;
+  box-shadow:5px 5px 0 var(--ink); padding:20px; margin-top:20px; text-align:center;
+  position:relative; overflow:hidden;
+}
+.result-head .big{
+  font-size:52px; font-weight:900; color:var(--yellow); line-height:1.1;
+  text-shadow:3px 3px 0 rgba(0,0,0,.25); margin:4px 0;
+}
+.result-head .unit{font-size:18px; font-weight:800}
+.route-svg{width:100%; height:110px; display:block; margin-top:8px}
+.route-svg .dash{stroke-dasharray:14 11; animation:march 1.2s linear infinite}
+@keyframes march{to{stroke-dashoffset:-25}}
+.stat-row{display:flex; gap:10px; margin-top:14px}
+.stat{
+  flex:1; background:#fff; border:3px solid var(--ink); border-radius:16px;
+  padding:10px 6px; text-align:center; box-shadow:3px 3px 0 var(--ink);
+}
+.stat .v{font-size:19px; font-weight:900; color:var(--red)}
+.stat .l{font-size:11.5px; color:#8a7a68; font-weight:700}
+
+/* 进度条 */
+.progress-wrap{margin-top:16px}
+.pbar{
+  height:26px; border:3px solid var(--ink); border-radius:999px; background:#fff;
+  overflow:hidden; position:relative;
+}
+.pbar .fill{
+  height:100%; background:repeating-linear-gradient(45deg,var(--yellow) 0 12px,#FFB300 12px 24px);
+  border-right:3px solid var(--ink); transition:width .8s ease; min-width:0;
+}
+.ptext{font-size:13px; font-weight:800; margin-top:8px; text-align:center}
+
+/* 餐品卡片 */
+.food-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px}
+.food{
+  border:3px solid var(--ink); border-radius:18px; background:#fff; overflow:hidden;
+  box-shadow:4px 4px 0 var(--ink); text-align:center;
+}
+.food .pic{
+  height:112px; background:linear-gradient(160deg,#FFF3D0,#FFE9A8);
+  display:flex; align-items:center; justify-content:center; overflow:hidden;
+}
+.food .pic img{width:100%; height:100%; object-fit:contain}
+.food .pic .ph{font-size:46px}
+.food .nm{font-size:13px; font-weight:800; padding:8px 6px 2px}
+.food .cnt{font-size:22px; font-weight:900; color:var(--red); padding-bottom:2px}
+.food .cnt small{font-size:12px; color:var(--ink); font-weight:700}
+.food .kcal{font-size:11px; color:#8a7a68; padding-bottom:10px}
+.star-strip{
+  background:var(--yellow); border:3px solid var(--ink); border-radius:16px;
+  padding:12px 14px; margin-top:14px; font-weight:800; font-size:14.5px;
+  box-shadow:3px 3px 0 var(--ink);
+}
+
+/* 三姿势对比 */
+.vs-row{display:flex; gap:10px; margin-top:14px}
+.vs{
+  flex:1; border:3px solid var(--ink); border-radius:16px; padding:12px 6px;
+  text-align:center; background:#fff;
+}
+.vs.me{background:#FFF3D0; box-shadow:3px 3px 0 var(--ink)}
+.vs .ico{font-size:28px}
+.vs .v{font-size:17px; font-weight:900; color:var(--red)}
+.vs .l{font-size:11px; color:#8a7a68; font-weight:700}
+.vs .note{font-size:10.5px; color:#8a7a68; margin-top:4px; line-height:1.4}
+
+.share-row{display:flex; gap:10px; margin-top:16px}
+
+footer{
+  max-width:480px; margin:40px auto 0; padding:20px 16px 40px; text-align:center;
+  font-size:11.5px; color:#8a7a68; line-height:1.8;
+}
+footer a{color:var(--red); font-weight:700}
+.warn-tag{
+  display:inline-block; background:#fff; border:2px solid var(--ink); border-radius:999px;
+  padding:3px 12px; font-size:11px; font-weight:800; color:var(--ink); margin:2px;
+}
+
+.loading .btn{opacity:.7; pointer-events:none}
+.hidden{display:none !important}
+.shake{animation:shake .4s}
+@keyframes shake{
+  0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)}
+  50%{transform:translateX(6px)} 75%{transform:translateX(-4px)}
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <span class="flame" style="left:12%; bottom:20px; animation-delay:.2s">🔥</span>
+  <span class="flame" style="left:48%; bottom:12px; animation-delay:1.4s">🔥</span>
+  <span class="flame" style="left:80%; bottom:26px; animation-delay:2.6s">🔥</span>
+
+  <svg class="burger-hero" viewBox="0 0 200 170" aria-hidden="true">
+    <!-- 顶面包 -->
+    <path d="M12 78 C12 26 188 26 188 78 Z" fill="#F6A94A" stroke="#2B2118" stroke-width="6" stroke-linejoin="round"/>
+    <ellipse cx="62" cy="52" rx="8" ry="5" fill="#FFEBC2" transform="rotate(-18 62 52)"/>
+    <ellipse cx="100" cy="42" rx="8" ry="5" fill="#FFEBC2"/>
+    <ellipse cx="138" cy="52" rx="8" ry="5" fill="#FFEBC2" transform="rotate(18 138 52)"/>
+    <!-- 眼睛和微笑 -->
+    <circle cx="82" cy="66" r="6" fill="#2B2118"/><circle cx="84" cy="64" r="2" fill="#fff"/>
+    <circle cx="118" cy="66" r="6" fill="#2B2118"/><circle cx="120" cy="64" r="2" fill="#fff"/>
+    <path d="M90 82 Q100 92 110 82" stroke="#2B2118" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <!-- 生菜 -->
+    <path d="M10 90 Q28 78 46 90 Q64 78 82 90 Q100 78 118 90 Q136 78 154 90 Q172 78 190 90 L190 100 Q100 112 10 100 Z"
+          fill="#7CB342" stroke="#2B2118" stroke-width="5" stroke-linejoin="round"/>
+    <!-- 芝士 -->
+    <path d="M14 102 L186 102 L178 118 L158 108 L138 120 L118 108 L98 120 L78 108 L58 120 L38 108 L22 116 Z"
+          fill="#FFC72C" stroke="#2B2118" stroke-width="5" stroke-linejoin="round"/>
+    <!-- 肉饼 -->
+    <rect x="16" y="112" width="168" height="24" rx="12" fill="#8B5A2B" stroke="#2B2118" stroke-width="5"/>
+    <!-- 底面包 -->
+    <path d="M16 138 L184 138 C184 162 160 166 100 166 C40 166 16 162 16 138 Z"
+          fill="#F6A94A" stroke="#2B2118" stroke-width="6" stroke-linejoin="round"/>
+  </svg>
+
+  <h1>麦麦<span class="hl">热量回收</span>计划</h1>
+  <p class="sub">走去麦当劳这趟路，烧掉的卡路里都是你回收的额度 🍔</p>
+  <p class="sub" style="opacity:.8; font-size:13px; margin-top:4px">别人算热量是怕吃，我们算热量是给吃找理由。</p>
+</div>
+<div class="zig"><svg viewBox="0 0 480 16" preserveAspectRatio="none"><polygon points="0,0 480,0 480,4 440,16 400,4 360,16 320,4 280,16 240,4 200,16 160,4 120,16 80,4 40,16 0,4" fill="#FFF8E7"/></svg></div>
+
+<div class="wrap">
+
+  <!-- 1. 出行方式 -->
+  <div class="card" id="s1">
+    <h2><span class="step-no">1</span>这趟怎么去？</h2>
+    <div class="mode-row">
+      <div class="mode on" data-mode="walk" onclick="setMode('walk')"><span class="ico">🚶</span>步行去</div>
+      <div class="mode" data-mode="bike" onclick="setMode('bike')"><span class="ico">🚴</span>骑行去</div>
+    </div>
+    <p class="hint">同样一条路，腿着去比骑车多回收一倍热量，但骑车能去更远的店。你细品。</p>
+  </div>
+
+  <!-- 2. 定位 -->
+  <div class="card" id="s2">
+    <h2><span class="step-no">2</span>你在哪儿？</h2>
+    <button class="btn yellow" onclick="getLoc()">📍 获取我的位置</button>
+    <p class="hint" id="locHint">定位只在你的浏览器里计算，不上传、不存储，放心。</p>
+    <div class="chips" id="anchorChips"></div>
+    <div id="storeBox" class="hidden">
+      <h2 style="margin-top:18px; font-size:16px">🍟 附近的麦当劳</h2>
+      <div id="storeList"></div>
+    </div>
+  </div>
+
+  <!-- 3. 体重 -->
+  <div class="card" id="s3">
+    <h2><span class="step-no">3</span>体重（算热量要靠它）</h2>
+    <div class="slider-row">
+      <input type="range" id="weight" min="40" max="120" step="1" value="60" oninput="onWeight(this.value)">
+      <div class="w-badge"><span id="wVal">60</span> kg</div>
+    </div>
+    <p class="hint">按 MET 公式估算：体重越沉，同样的路回收越多——这大概是你唯一一次期待秤上的数字变大。</p>
+  </div>
+
+  <button class="btn" id="calcBtn" style="margin-top:24px; font-size:19px" onclick="computeAll()">🔥 算算这趔回收多少</button>
+
+  <!-- 结果 -->
+  <div id="result" class="hidden">
+    <div class="result-head">
+      <div style="font-size:14px; font-weight:800; opacity:.95">这一趟，你回收了</div>
+      <div class="big"><span id="kcalNum">0</span></div>
+      <div class="unit">大卡 🔥</div>
+      <svg class="route-svg" viewBox="0 0 320 110" aria-hidden="true">
+        <ellipse cx="160" cy="98" rx="140" ry="9" fill="rgba(255,255,255,.18)"/>
+        <path class="dash" d="M34 86 C110 24 214 24 286 82" stroke="#FFC72C" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <circle cx="34" cy="86" r="13" fill="#fff" stroke="#2B2118" stroke-width="4"/>
+        <text x="34" y="92" font-size="17" text-anchor="middle" id="modeEmoji">🚶</text>
+        <line x1="286" y1="46" x2="286" y2="84" stroke="#2B2118" stroke-width="5" stroke-linecap="round"/>
+        <path d="M286 46 L316 54 L286 62 Z" fill="#FFC72C" stroke="#2B2118" stroke-width="4" stroke-linejoin="round"/>
+        <text x="282" y="26" font-size="24" text-anchor="middle">🍔</text>
+      </svg>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat"><div class="v" id="distVal">-</div><div class="l">路线距离</div></div>
+      <div class="stat"><div class="v" id="durVal">-</div><div class="l">预计用时</div></div>
+      <div class="stat"><div class="v" id="paceVal">-</div><div class="l" id="paceLabel">去程回收</div></div>
+    </div>
+    <p class="hint" id="routeSrc" style="text-align:center"></p>
+
+    <!-- 巨无霸进度条 -->
+    <div class="card" style="margin-top:18px">
+      <h2 style="font-size:17px">🍔 巨无霸回本进度</h2>
+      <div class="progress-wrap">
+        <div class="pbar"><div class="fill" id="bigFill" style="width:0%"></div></div>
+        <div class="ptext" id="bigText"></div>
+      </div>
+    </div>
+
+    <!-- 烧掉清单 -->
+    <div class="card">
+      <h2 style="font-size:17px">🍗 这趟路烧掉了……</h2>
+      <div class="food-grid" id="starGrid"></div>
+      <div class="star-strip" id="exactStrip"></div>
+    </div>
+
+    <!-- 三姿势对比 -->
+    <div class="card">
+      <h2 style="font-size:17px">🛵 三种姿势对比</h2>
+      <div class="vs-row" id="vsRow"></div>
+      <div class="share-row">
+        <button class="btn yellow" onclick="copyReport()">📋 复制战报</button>
+        <button class="btn ghost" onclick="location.reload()">🔄 再算一次</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div>
+    <span class="warn-tag">参赛作品 · 非麦当劳官方产品</span>
+    <span class="warn-tag">热量为估算值</span>
+    <span class="warn-tag">不构成营养建议</span>
+  </div>
+  <p style="margin-top:12px">
+    麦麦热量回收计划 · 麦当劳程序员创意开发大赛参赛作品，由参赛者独立开发。<br>
+    餐品营养数据与门店信息来自麦当劳中国 MCP Server 官方接口；路线由 OpenStreetMap / OSRM 计算，卡路里按 MET 公式估算。<br>
+    本项目输出仅供参考，不构成医疗、营养或其他专业建议；餐品信息及供应状态以麦当劳官方渠道实时结果为准。
+  </p>
+  <p style="margin-top:10px">
+    <a href="https://github.com/Dolkkk/mcd-calorie-recycle" target="_blank" rel="noopener">GitHub 开源仓库 ↗</a>
+  </p>
+</footer>
+
+<script src="data.js"></script>
+<script>
+'use strict';
+/* ================= 状态 ================= */
+const S = { mode:'walk', pos:null, posLabel:'', store:null, weight:60, routes:null };
+const MET = { walk:3.8, bike:5.0 };          // 步行约5km/h / 休闲骑行约13-16km/h（骑行值经WorkBuddy审查由6.8下调）
+const SPEED = { walk:1.39, bike:3.6 };       // m/s（OSRM 失败时的估算速度）
+const BIG_MAC_KCAL = (DATA.foods.find(f => f.n === '巨无霸') || {k:513}).k;
+
+/* ================= 工具 ================= */
+function hav(a, b){
+  const R = 6371, toR = d => d * Math.PI / 180;
+  const dLat = toR(b[1]-a[1]), dLon = toR(b[0]-a[0]);
+  const h = Math.sin(dLat/2)**2 + Math.cos(toR(a[1]))*Math.cos(toR(b[1]))*Math.sin(dLon/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function fmtMin(s){ const m = Math.round(s/60); return m < 60 ? m + ' 分钟' : Math.floor(m/60) + ' 时' + (m%60) + ' 分'; }
+function kcalOf(profile, weight, durSec){ return MET[profile] * 3.5 * weight / 200 * (durSec/60); }
+function animateNum(el, target, dec){
+  const t0 = performance.now(), dur = 800;
+  function tick(t){
+    const p = Math.max(0, Math.min(1, (t - t0) / dur)), e = 1 - Math.pow(1 - p, 3);
+    el.textContent = (Math.max(0, target) * e).toFixed(dec);
+    if(p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+function shake(sel){ const el = document.querySelector(sel); el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+
+/* ================= 1. 出行方式 ================= */
+function setMode(m){
+  S.mode = m;
+  document.querySelectorAll('.mode').forEach(el => el.classList.toggle('on', el.dataset.mode === m));
+  if(S.routes) renderResult();
+}
+
+/* ================= 2. 定位与门店 ================= */
+function getLoc(){
+  const hint = document.getElementById('locHint');
+  hint.textContent = '定位中……';
+  if(!navigator.geolocation){ hint.textContent = '这浏览器不支持定位，点下面的地标手动选吧。'; return; }
+  navigator.geolocation.getCurrentPosition(
+    p => {
+      S.pos = [p.coords.longitude, p.coords.latitude];
+      S.posLabel = '我的位置';
+      hint.textContent = '✅ 定位成功（坐标没有离开你的设备）';
+      renderStores();
+    },
+    () => { hint.textContent = '没拿到定位权限，点下面的地标手动选一个吧～'; shake('#s2'); },
+    { enableHighAccuracy:false, timeout:10000, maximumAge:60000 }
+  );
+}
+function useAnchor(key){
+  const c = DATA.anchors[key];
+  if(!c) return;
+  S.pos = c.slice(0, 2);
+  S.posLabel = key.split('-')[1] + '（' + key.split('-')[0] + '）';
+  document.getElementById('locHint').textContent = '✅ 已切换到地标：' + S.posLabel;
+  document.querySelectorAll('#anchorChips .chip').forEach(el => el.classList.toggle('on', el.dataset.k === key));
+  renderStores();
+}
+function renderStores(){
+  const box = document.getElementById('storeBox'), list = document.getElementById('storeList');
+  box.classList.remove('hidden');
+  const ranked = DATA.stores
+    .filter(s => s.coord)
+    .map(s => ({...s, d: hav(S.pos, s.coord)}))
+    .sort((a, b) => a.d - b.d)
+    .slice(0, 5);
+  if(!ranked.length){ list.innerHTML = '<p class="hint">附近暂时没有数据，换个地标试试。</p>'; return; }
+  S.store = ranked[0];
+  list.innerHTML = ranked.map((s, i) => `
+    <div class="store ${i === 0 ? 'on' : ''}" onclick="pickStore(${i})">
+      <div>
+        <div class="nm">${s.n}</div>
+        <div class="ad">${s.a}</div>
+        <div class="badge">🕐 ${s.o || '?'}–${s.cl || '?'}</div>
+      </div>
+      <div class="km">直线<br>${s.d.toFixed(1)}km</div>
+    </div>`).join('');
+  S._ranked = ranked;
+}
+function pickStore(i){
+  S.store = S._ranked[i];
+  document.querySelectorAll('#storeList .store').forEach((el, k) => el.classList.toggle('on', k === i));
+  if(S.routes) computeAll();   // 换店后自动重算
+}
+
+/* ================= 3. 体重 ================= */
+function onWeight(v){
+  S.weight = +v;
+  document.getElementById('wVal').textContent = v;
+  if(S.routes) renderResult();
+}
+
+/* ================= 路线 ================= */
+async function osrmRoute(profile){
+  const [f, t] = [S.pos, S.store.coord];
+  const url = `https://routing.openstreetmap.de/routed-${profile}/route/v1/${profile}/` +
+    `${f[0]},${f[1]};${t[0]},${t[1]}?overview=false`;
+  const r = await fetch(url);
+  const j = await r.json();
+  if(j.code !== 'Ok' || !j.routes || !j.routes.length) throw new Error('osrm');
+  return { dist: j.routes[0].distance, dur: j.routes[0].duration, src: 'osrm' };
+}
+async function getRoute(profile){
+  try{ return await osrmRoute(profile); }
+  catch(e){
+    const d = hav(S.pos, S.store.coord) * 1000 * 1.35;   // 绕路系数
+    const speed = profile === 'foot' ? SPEED.walk : SPEED.bike;
+    return { dist: d, dur: d / speed, src: 'est' };
+  }
+}
+
+/* ================= 计算与渲染 ================= */
+async function computeAll(){
+  if(!S.pos){ shake('#s2'); document.getElementById('locHint').textContent = '先获取位置或选个地标呀！'; return; }
+  if(!S.store) renderStores();
+  const btn = document.getElementById('calcBtn');
+  btn.textContent = '⏳ 正在规划路线……';
+  btn.style.pointerEvents = 'none';
+  const [walk, bike] = await Promise.all([getRoute('foot'), getRoute('bike')]);
+  S.routes = { walk, bike };
+  btn.textContent = '🔥 算算这趔回收多少';
+  btn.style.pointerEvents = '';
+  renderResult();
+  document.getElementById('result').classList.remove('hidden');
+  document.getElementById('result').scrollIntoView({ behavior:'smooth' });
+}
+
+function renderResult(){
+  const isWalk = S.mode === 'walk';
+  const r = S.routes[isWalk ? 'walk' : 'bike'];
+  const profile = isWalk ? 'walk' : 'bike';
+  const kcal = kcalOf(profile, S.weight, r.dur);
+  if(!isFinite(kcal) || !isFinite(r.dur)){
+    document.getElementById('routeSrc').textContent = '⚠️ 路线计算异常，请重试';
+    return;
+  }
+
+  document.getElementById('modeEmoji').textContent = isWalk ? '🚶' : '🚴';
+  animateNum(document.getElementById('kcalNum'), kcal, 0);
+  document.getElementById('distVal').textContent = (r.dist/1000).toFixed(2) + ' km';
+  document.getElementById('durVal').textContent = fmtMin(r.dur);
+  document.getElementById('paceVal').textContent = (kcal / (r.dur/60)).toFixed(1) + ' kcal/分';
+  document.getElementById('routeSrc').textContent =
+    (r.src === 'osrm' ? '🗺️ 路线：OSRM 真实路网' : '📐 路线：直线距离 × 绕路系数估算') +
+    ' · 门店坐标为构建期估算，距离仅供参考';
+
+  /* 巨无霸进度 */
+  const ratio = kcal / BIG_MAC_KCAL;
+  document.getElementById('bigFill').style.width = Math.min(100, ratio * 100).toFixed(1) + '%';
+  const bt = document.getElementById('bigText');
+  if(ratio < 0.3)      bt.textContent = `刚热身，离一个巨无霸还差 ${((1-ratio)*BIG_MAC_KCAL).toFixed(0)} 大卡，加油！`;
+  else if(ratio < 0.7) bt.textContent = `已经烧掉 ${(ratio*100).toFixed(0)}% 个巨无霸，胜利在望！`;
+  else if(ratio < 1)   bt.textContent = `就差一口！再来 ${(BIG_MAC_KCAL-kcal).toFixed(0)} 大卡就巨无霸自由！`;
+  else                 bt.textContent = `🎉 巨无霸自由！这趟直接回本 ${(kcal-BIG_MAC_KCAL).toFixed(0)} 大卡！`;
+
+  /* 明星四件套 */
+  const stars = ['巨无霸', '麦乐鸡5块', '中薯条', '圆筒冰淇淋']
+    .map(nm => DATA.foods.find(f => f.n === nm))
+    .filter(Boolean);
+  document.getElementById('starGrid').innerHTML = stars.map(f => {
+    const cnt = Math.max(0.1, kcal / f.k);
+    return `<div class="food">
+      <div class="pic">${f.img ? `<img src="${f.img}" alt="${f.n}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=ph>🍔</div>'">` : '<div class="ph">🍔</div>'}</div>
+      <div class="nm">${f.n}</div>
+      <div class="cnt">× ${cnt.toFixed(1)}<small> 份</small></div>
+      <div class="kcal">每份约 ${f.k} 大卡</div>
+    </div>`;
+  }).join('');
+
+  /* 精准回本榜 */
+  const seen = new Set();
+  const exact = DATA.foods
+    .filter(f => f.img && f.k > 40 && !seen.has(f.n) && seen.add(f.n))
+    .map(f => ({ f, cnt: kcal / f.k }))
+    .filter(x => x.cnt >= 0.8 && x.cnt <= 1.25)
+    .sort((a, b) => Math.abs(a.cnt - 1) - Math.abs(b.cnt - 1))
+    .slice(0, 3);
+  document.getElementById('exactStrip').innerHTML = exact.length
+    ? '🎯 精准回本：这趟路刚好烧掉 ' + exact.map(x => `一份${x.f.n}`).join(' / ')
+    : '🎯 再多走两步，就有餐品可以精准回本了！';
+
+  /* 三姿势对比 */
+  const wk = kcalOf('walk', S.weight, S.routes.walk.dur);
+  const bk = kcalOf('bike', S.weight, S.routes.bike.dur);
+  const pick = (v, me) => `<div class="vs ${me ? 'me' : ''}">
+      <div class="ico">${me ? '⭐' : ''}${v.ico}</div>
+      <div class="v">${v.kcal.toFixed(0)}</div>
+      <div class="l">大卡 · ${v.time}</div>
+      <div class="note">${v.note}</div>
+    </div>`;
+  document.getElementById('vsRow').innerHTML =
+    pick({ ico:'🚶', kcal:wk, time:fmtMin(S.routes.walk.dur), note:'一来一回热量×2，慢但回本最狠' }, S.mode === 'walk') +
+    pick({ ico:'🚴', kcal:bk, time:fmtMin(S.routes.bike.dur), note:'效率之王，省下的时间还能多吃一对辣翅' }, S.mode === 'bike') +
+    pick({ ico:'🛵', kcal:0, time:'30 分钟', note:'外卖党：热量纯收入，建议配一集健身视频' }, false);
+}
+
+function copyReport(){
+  const isWalk = S.mode === 'walk';
+  const r = S.routes[isWalk ? 'walk' : 'bike'];
+  const kcal = kcalOf(isWalk ? 'walk' : 'bike', S.weight, r.dur);
+  const txt = `我在去麦当劳的路上回收了 ${kcal.toFixed(0)} 大卡🔥 约等于 ${(kcal/BIG_MAC_KCAL).toFixed(1)} 个巨无霸！` +
+    `（${isWalk ? '步行' : '骑行'} ${(r.dist/1000).toFixed(1)}km）#麦麦热量回收计划`;
+  (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject())
+    .then(() => alert('战报已复制，去朋友圈回收羡慕吧！'))
+    .catch(() => alert(txt));
+}
+
+/* ================= 初始化 ================= */
+(function init(){
+  const chips = document.getElementById('anchorChips');
+  chips.innerHTML = Object.keys(DATA.anchors || {}).map(k =>
+    `<div class="chip" data-k="${k}" onclick="useAnchor('${k}')">${k.split('-')[1]}</div>`).join('');
+})();
+</script>
+</body>
+</html>
