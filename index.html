@@ -260,7 +260,7 @@ footer a{color:var(--red); font-weight:700}
     <p class="hint">按 MET 公式估算：体重越沉，同样的路回收越多——这大概是你唯一一次期待秤上的数字变大。</p>
   </div>
 
-  <button class="btn" id="calcBtn" style="margin-top:24px; font-size:19px" onclick="computeAll()">🔥 算算这趔回收多少</button>
+  <button class="btn" id="calcBtn" style="margin-top:24px; font-size:19px" onclick="computeAll()">🔥 算算这趟回收多少</button>
 
   <!-- 结果 -->
   <div id="result" class="hidden">
@@ -453,7 +453,7 @@ async function computeAll(){
   btn.style.pointerEvents = 'none';
   const [walk, bike] = await Promise.all([getRoute('foot'), getRoute('bike')]);
   S.routes = { walk, bike };
-  btn.textContent = '🔥 算算这趔回收多少';
+  btn.textContent = '🔥 算算这趟回收多少';
   btn.style.pointerEvents = '';
   renderResult();
   document.getElementById('result').classList.remove('hidden');
